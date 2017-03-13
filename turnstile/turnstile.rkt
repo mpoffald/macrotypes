@@ -626,6 +626,7 @@
      #:with tag2 (current-tag2)
      #'(define-syntax (rulename stx)
          (parameterize ([current-check-relation (current-typecheck-relation)]
+                        [current=? (current-type=?)]
                         [current-ev (current-type-eval)]
                         [current-tag (type-key1)]
                         [current-tag2 (type-key2)])
