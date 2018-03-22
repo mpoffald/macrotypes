@@ -581,7 +581,7 @@
 ;        (define-base-type TY : κ) ; dont use bc uses '::, and runtime errs
         (struct TY/internal () #:prefab)
         (define-typed-syntax TY
-          [_:id ≫ --- [⊢ #,(syntax-property #'(TY/internal) 'elim-name #'elim-TY) ⇒ τ]])
+          [_:id ≫ --- [⊢ #,(syntax-property (syntax-property #'(TY/internal) 'elim-name #'elim-TY) 'ref-name #'TY) ⇒ τ]])
         ;; define structs for `C` constructors
         (struct C/internal (x ...) #:transparent) ...
         (define C (unsafe-assign-type C/internal : τC)) ...
