@@ -673,15 +673,15 @@
           [⊢ A ≫ A- ⇐ τA] ...
           [⊢ i ≫ i- ⇐ τi] ...
           ----------
-          [⊢ #,(syntax-property #'(TY- A- ... i- ...) 'elim-name #'elim-TY) ⇒ τ])
+          [⊢ #,(syntax-property (syntax-property #'(TY- A- ... i- ...) 'elim-name #'elim-TY) 'data-ref-name #'(TY A ... i ...)) ⇒ τ])
 
         ;; define structs for constructors
         ;; TODO: currently i's are included in struct fields; separate i's from i+x's
         (struct C/internal (xs) #:transparent) ...
         ;; TODO: this define should be a macro instead?
         ;; must use internal list, bc Racket is not auto-currying
-        (define C (unsafe-assign-type
-                   (λ/c- (A ... i+x ...) (C/internal (list i+x ...)))
+        (define C (unsafe-assign-type-with-ref-name
+                   (λ/c- (A ... i+x ...) (C/internal (list i+x ...))) (C)
                    : τC)) ...
         ;; define eliminator-form elim-TY
         ;; v = target
