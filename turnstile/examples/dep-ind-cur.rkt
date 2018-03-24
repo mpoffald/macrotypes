@@ -464,7 +464,7 @@
 
 
 (define-typed-syntax (unsafe-assign-type e (~datum :) τ) ≫ --- [⊢ e ⇒ τ])
-(define-typed-syntax (unsafe-assign-type-with-ref-name e (name) (~datum :) τ) ≫ --- [⊢ #,(syntax-property #'e 'ref-name #'name) ⇒ τ])
+(define-typed-syntax (unsafe-assign-type-with-ref-name e (name) (~datum :) τ) ≫ --- [⊢ #,(syntax-property #'e 'c-ref-name #'name) ⇒ τ])
 
 ;; TmpTy is a placeholder for undefined names
 (struct TmpTy- ())
@@ -582,7 +582,7 @@
 ;        (define-base-type TY : κ) ; dont use bc uses '::, and runtime errs
         (struct TY/internal () #:prefab)
         (define-typed-syntax TY
-          [_:id ≫ --- [⊢ #,(syntax-property (syntax-property #'(TY/internal) 'elim-name #'elim-TY) 'ref-name #'TY) ⇒ τ]])
+          [_:id ≫ --- [⊢ #,(syntax-property (syntax-property #'(TY/internal) 'elim-name #'elim-TY) 'data-ref-name #'TY) ⇒ τ]])
         ;; define structs for `C` constructors
         (struct C/internal (x ...) #:transparent) ...
         (define C (unsafe-assign-type-with-ref-name C/internal (C) : τC)) ...
