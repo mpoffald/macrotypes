@@ -441,7 +441,7 @@
    #:with y+props (transfer-props #'e- #'y #:except '(origin))
    --------
    [≻ (begin-
-        (define-syntax x (make-rename-transformer #'y+props))
+        (define-syntax x (make-rename-transformer (syntax-property #'y+props 'def-ref-name #'x)))
         (define- y e-))]]
   [(_ x:id e) ≫
    ;This won't work with mutually recursive definitions
@@ -450,7 +450,7 @@
    #:with y+props (transfer-props #'e- #'y #:except '(origin))
    --------
    [≻ (begin-
-        (define-syntax x (make-rename-transformer #'y+props))
+        (define-syntax x (make-rename-transformer  (syntax-property #'y+props 'def-ref-name #'x)))
         (define- y e-))]]
   #;[(_ (f [x (~datum :) ty] ... (~or (~datum →) (~datum ->)) ty_out) e ...+) ≫
    #:with f- (add-orig (generate-temporary #'f) #'f)
@@ -576,6 +576,7 @@
    #:with elim-TY (format-id #'TY "elim-~a" #'TY)
    #:with eval-TY (format-id #'TY "eval-~a" #'TY)
    #:with TY/internal (generate-temporary #'TY)
+   ;#:do [(displayln (format "elim-TY: ~a \n eval-TY: ~a" #'elim-TY #'eval-TY))]
    --------
    [≻ (begin-
         ;; define `TY`, eg "Nat", as a valid type
@@ -661,6 +662,7 @@
    #:with TY-patexpand (mk-~ #'TY)
    #:with elim-TY (format-id #'TY "elim-~a" #'TY)
    #:with eval-TY (format-id #'TY "match-~a" #'TY)
+   ;#:do [(displayln (format "elim-TY: ~a \n eval-TY: ~a" #'elim-TY #'eval-TY))]
    #:with (τm ...) (generate-temporaries #'(m ...))
    ;; these are all the generated definitions that implement the define-datatype
    #:with OUTPUT-DEFS
