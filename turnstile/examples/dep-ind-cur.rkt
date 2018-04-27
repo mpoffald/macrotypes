@@ -583,7 +583,7 @@
 ;        (define-base-type TY : κ) ; dont use bc uses '::, and runtime errs
         (struct TY/internal () #:prefab)
         (define-typed-syntax TY
-          [_:id ≫ --- [⊢ #,(syntax-property (syntax-property #'(TY/internal) 'elim-name #'elim-TY) 'data-ref-name #'TY) ⇒ τ]])
+          [_:id ≫ --- [⊢ #,(syntax-property (syntax-property (syntax-property (syntax-property #'(TY/internal) 'elim-name #'elim-TY) 'data-ref-name #'TY) 'constructors   #'(C ...)) 'num-parameters  0) ⇒ τ]])
         ;; define structs for `C` constructors
         (struct C/internal (x ...) #:transparent) ...
         (define C (unsafe-assign-type-with-ref-name C/internal (C) : τC)) ...
@@ -675,7 +675,7 @@
           [⊢ A ≫ A- ⇐ τA] ...
           [⊢ i ≫ i- ⇐ τi] ...
           ----------
-          [⊢ #,(syntax-property (syntax-property #'(TY- A- ... i- ...) 'elim-name #'elim-TY) 'data-ref-name #'(TY A ... i ...)) ⇒ τ])
+          [⊢ #,(syntax-property (syntax-property (syntax-property (syntax-property #'(TY- A- ... i- ...) 'elim-name #'elim-TY) 'data-ref-name #'(TY A ... i ...)) 'constructors #'(C ...)) 'num-parameters (stx-length #'([A : τA] ...))) ⇒ τ])
 
         ;; define structs for constructors
         ;; TODO: currently i's are included in struct fields; separate i's from i+x's
