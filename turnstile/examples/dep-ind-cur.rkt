@@ -464,7 +464,7 @@
 
 
 (define-typed-syntax (unsafe-assign-type e (~datum :) τ) ≫ --- [⊢ e ⇒ τ])
-(define-typed-syntax (unsafe-assign-type-with-ref-name e (name) (~datum :) τ) ≫ --- [⊢ #,(syntax-property #'e 'c-ref-name #'name) ⇒ τ])
+(define-typed-syntax (unsafe-assign-type-with-ref-name name e (~datum :) τ) ≫ --- [⊢ #,(syntax-property #'e 'c-ref-name #'name) ⇒ τ])
 
 ;; TmpTy is a placeholder for undefined names
 (struct TmpTy- ())
@@ -586,7 +586,7 @@
           [_:id ≫ --- [⊢ #,(syntax-property (syntax-property (syntax-property (syntax-property #'(TY/internal) 'elim-name #'elim-TY) 'data-ref-name #'TY) 'constructors   #'(C ...)) 'num-parameters  0) ⇒ τ]])
         ;; define structs for `C` constructors
         (struct C/internal (x ...) #:transparent) ...
-        (define C (unsafe-assign-type-with-ref-name C/internal (C) : τC)) ...
+        (define C (unsafe-assign-type-with-ref-name C C/internal : τC)) ...
         ;; elimination form
         (define-typerule (elim-TY v P m ...) ≫
           [⊢ v ≫ v- ⇐ TY]
@@ -682,8 +682,8 @@
         (struct C/internal (xs) #:transparent) ...
         ;; TODO: this define should be a macro instead?
         ;; must use internal list, bc Racket is not auto-currying
-        (define C (unsafe-assign-type-with-ref-name
-                   (λ/c- (A ... i+x ...) (C/internal (list i+x ...))) (C)
+        (define C (unsafe-assign-type-with-ref-name C
+                   (λ/c- (A ... i+x ...) (C/internal (list i+x ...)))
                    : τC)) ...
         ;; define eliminator-form elim-TY
         ;; v = target
