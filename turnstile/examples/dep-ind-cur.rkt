@@ -21,6 +21,7 @@
          (rename-out [Π/c Π] [→/c →] [∀/c ∀] [λ/c λ] [app/c #%app])
          = eq-refl eq-elim
          ann define-datatype define define-type-alias
+         (for-syntax ~Π ~Type)
 )
 
 ;; TODO:
