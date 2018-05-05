@@ -37,11 +37,12 @@
 ;; Type = (Type 0)
 (define-internal-type-constructor Type #:runtime)
 (define-typed-syntax Type
-  [:id ≫ --- [≻ (Type 0)]]
+  [:id ≫ --- [≻ #,(syntax-property #'(Type 0) 'Type #t)]]
   [(_ n:exact-nonnegative-integer) ≫
    #:with n+1 (+ (syntax-e #'n) 1)
   -------------
   [≻ #,(syntax-property
+        (syntax-property
         (syntax-property 
          #'(Type- 'n) ':
          (syntax-property
@@ -49,7 +50,8 @@
           'orig
           (list #'(Type n+1))))
         'orig
-        (list #'(Type n)))]])
+        (list #'(Type n)))
+        'Type #t)]])
 
 (begin-for-syntax
   (define debug? #f)
@@ -115,7 +117,7 @@
   ;; must re-expand since (Type n) will have type unexpanded (Type n+1)
   #:with ((~Type _) ...) (stx-map (current-type-eval) #'(tyoutty tyinty ...))
   -------
-  [⊢ (∀- (X- ...) (→- τ_in- ... τ_out-)) ⇒ Type]
+  [⊢ #,(syntax-property #'(∀- (X- ...) (→- τ_in- ... τ_out-)) 'Π #t) ⇒ Type]
   #;[⊢ #,#`(∀- (X- ...)
              #,(assign-type
                 #'(→- τ_in- ... τ_out-)
@@ -364,7 +366,7 @@
    ;;      (pretty-print (stx->datum (stx-map typeof #'(ty2 ...))))]
    [⊢ e_arg ≫ e_arg- ⇐ τ_in] ... ; typechecking args
    -----------------------------
-   [⊢ (app/eval e_fn- e_arg- ...) ⇒ #,(substs #'(e_arg- ...) #'(X ...) #'τ_out)]])
+   [⊢ #,(syntax-property #'(app/eval e_fn- e_arg- ...) 'app #t) ⇒ #,(substs #'(e_arg- ...) #'(X ...) #'τ_out)]])
 
 (define-typed-syntax (ann e (~datum :) τ) ≫
   [⊢ e ≫ e- ⇐ τ]
