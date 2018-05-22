@@ -467,7 +467,11 @@
 
 
 (define-typed-syntax (unsafe-assign-type e (~datum :) τ) ≫ --- [⊢ e ⇒ τ])
-(define-typed-syntax (unsafe-assign-type-with-ref-name name e (~datum :) τ) ≫ --- [⊢ #,(syntax-property #'e 'c-ref-name #'name) ⇒ τ])
+(define-typed-syntax (unsafe-assign-type-with-ref-props name args rec-args e (~datum :) τ) ≫ --- [⊢ #,(syntax-property
+                                                                                                       (syntax-property
+                                                                                                       (syntax-property #'e 'c-ref-name #'name)
+                                                                                                       'constructor-args  #'args)
+                                                                                                       'constructor-rec-args #'rec-args)⇒ τ])
 
 ;; TmpTy is a placeholder for undefined names
 (struct TmpTy- ())
@@ -479,7 +483,7 @@
 
 (struct match/delayed (name args) #:transparent)
 
-;; helper syntax fns
+;; helper syntax fnsd
 (begin-for-syntax
   ;; drops first n bindings in Π type
   (define (prune t n)
@@ -586,10 +590,15 @@
 ;        (define-base-type TY : κ) ; dont use bc uses '::, and runtime errs
         (struct TY/internal () #:prefab)
         (define-typed-syntax TY
-          [_:id ≫ --- [⊢ #,(syntax-property (syntax-property (syntax-property (syntax-property #'(TY/internal) 'elim-name #'elim-TY) 'data-ref-name #'TY) 'constructors   #'(C ...)) 'num-parameters  0) ⇒ τ]])
+          [_:id ≫ --- [⊢ #,(syntax-property
+                            (syntax-property
+                             (syntax-property
+                              (syntax-property #'(TY/internal) 'elim-name #'elim-TY)
+                              'data-ref-name #'TY)
+                             'constructors   #'(C ...)) 'num-parameters  0) ⇒ τ]])
         ;; define structs for `C` constructors
         (struct C/internal (x ...) #:transparent) ...
-        (define C (unsafe-assign-type-with-ref-name C C/internal : τC)) ...
+        (define C (unsafe-assign-type-with-ref-props C (x ...) (xrec ...) C/internal : τC)) ...
         ;; elimination form
         (define-typerule (elim-TY v P m ...) ≫
           [⊢ v ≫ v- ⇐ TY]
@@ -678,14 +687,18 @@
           [⊢ A ≫ A- ⇐ τA] ...
           [⊢ i ≫ i- ⇐ τi] ...
           ----------
-          [⊢ #,(syntax-property (syntax-property (syntax-property (syntax-property #'(TY- A- ... i- ...) 'elim-name #'elim-TY) 'data-ref-name #'(TY A ... i ...)) 'constructors #'(C ...)) 'num-parameters (stx-length #'([A : τA] ...))) ⇒ τ])
+          [⊢ #,(syntax-property
+                (syntax-property
+                 (syntax-property
+                  (syntax-property #'(TY- A- ... i- ...) 'elim-name #'elim-TY)
+                  'data-ref-name #'(TY A ... i ...)) 'constructors #'(C ...)) 'num-parameters (stx-length #'([A : τA] ...))) ⇒ τ])
 
         ;; define structs for constructors
         ;; TODO: currently i's are included in struct fields; separate i's from i+x's
         (struct C/internal (xs) #:transparent) ...
         ;; TODO: this define should be a macro instead?
         ;; must use internal list, bc Racket is not auto-currying
-        (define C (unsafe-assign-type-with-ref-name C
+        (define C (unsafe-assign-type-with-ref-props C ([A+i+x : τA+i+x] ...) ((xrec irec ...) ...)
                    (λ/c- (A ... i+x ...) (C/internal (list i+x ...)))
                    : τC)) ...
         ;; define eliminator-form elim-TY
