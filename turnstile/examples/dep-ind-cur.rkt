@@ -21,7 +21,7 @@
          (rename-out [Π/c Π] [→/c →] [∀/c ∀] [λ/c λ] [app/c #%app])
          = eq-refl eq-elim
          ann define-datatype define define-type-alias
-         (for-syntax ~Π ~Type)
+         (for-syntax ~Π ~Type assign-type)
 )
 
 ;; TODO:
@@ -516,7 +516,6 @@
           [_ #f])
         x+τs))
      x+τss))
-  )
 
 ;; use this macro to expand e, which contains references to unbound X
 (define-syntax (with-unbound stx)
@@ -650,8 +649,7 @@
    ;; ASSUME: indices cannot have type (TY ...), they are not recursive
    ;;         (otherwise, cannot include indices in args to find-recur/i)
    #:with (((xrec irec ...) ...) ...)
-          (find-recur/i #'TY (stx-length #'(i ...)) #'(([i+x τin] ...) ...))
-
+          (find-recur/i #'TY (stx-length #'(i ...)) #'(([i+x τin] ...) ...))        
    ;; ---------- pre-generate other patvars; makes nested macros below easier to read
    #:with (A- ...) (generate-temporaries #'(A ...))
    #:with (i- ...) (generate-temporaries #'(i ...))
@@ -676,6 +674,8 @@
    #:with eval-TY (format-id #'TY "match-~a" #'TY)
    ;#:do [(displayln (format "elim-TY: ~a \n eval-TY: ~a" #'elim-TY #'eval-TY))]
    #:with (τm ...) (generate-temporaries #'(m ...))
+   #:with (((rec-arg rec-i ...) ...) ...) ;i isn't recursive ,this is a bad name
+          (find-recur-idx #'TY (stx-length #'(i ...)) #'(([i+x τin] ...) ...))
    ;; these are all the generated definitions that implement the define-datatype
    #:with OUTPUT-DEFS
     #'(begin-
@@ -698,7 +698,7 @@
         (struct C/internal (xs) #:transparent) ...
         ;; TODO: this define should be a macro instead?
         ;; must use internal list, bc Racket is not auto-currying
-        (define C (unsafe-assign-type-with-ref-props C ([A+i+x : τA+i+x] ...) ((xrec irec ...) ...)
+        (define C (unsafe-assign-type-with-ref-props C ([A+i+x : τA+i+x] ...) ((rec-arg rec-i ...) ...)
                    (λ/c- (A ... i+x ...) (C/internal (list i+x ...)))
                    : τC)) ...
         ;; define eliminator-form elim-TY
