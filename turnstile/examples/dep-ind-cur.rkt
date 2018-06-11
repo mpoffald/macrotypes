@@ -516,6 +516,20 @@
           [_ #f])
         x+τs))
      x+τss))
+  
+
+  (define (find-recur-idx TY num-is x+τss)
+    (stx-map
+     (λ (x+τs)
+       (define xs (stx-map stx-car x+τs))
+       (stx-filtermap
+        (syntax-parser
+          [(x (t . _)) (if (and (free-id=? #'t TY))
+                                (cons #'x (stx-take xs num-is))
+                                (cons #f null))]
+          [_ #f])
+        x+τs))
+     x+τss)))
 
 ;; use this macro to expand e, which contains references to unbound X
 (define-syntax (with-unbound stx)
@@ -649,7 +663,8 @@
    ;; ASSUME: indices cannot have type (TY ...), they are not recursive
    ;;         (otherwise, cannot include indices in args to find-recur/i)
    #:with (((xrec irec ...) ...) ...)
-          (find-recur/i #'TY (stx-length #'(i ...)) #'(([i+x τin] ...) ...))        
+          (find-recur/i #'TY (stx-length #'(i ...)) #'(([i+x τin] ...) ...))
+        
    ;; ---------- pre-generate other patvars; makes nested macros below easier to read
    #:with (A- ...) (generate-temporaries #'(A ...))
    #:with (i- ...) (generate-temporaries #'(i ...))
