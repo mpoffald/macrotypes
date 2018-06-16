@@ -42,7 +42,6 @@
    #:with n+1 (+ (syntax-e #'n) 1)
   -------------
   [≻ #,(syntax-property
-        (syntax-property
         (syntax-property 
          #'(Type- 'n) ':
          (syntax-property
@@ -50,8 +49,7 @@
           'orig
           (list #'(Type n+1))))
         'orig
-        (list #'(Type n)))
-        'Type #t)]])
+        (list #'(Type n)))]])
 
 (begin-for-syntax
   (define debug? #f)
@@ -117,7 +115,7 @@
   ;; must re-expand since (Type n) will have type unexpanded (Type n+1)
   #:with ((~Type _) ...) (stx-map (current-type-eval) #'(tyoutty tyinty ...))
   -------
-  [⊢ #,(syntax-property #'(∀- (X- ...) (→- τ_in- ... τ_out-)) 'Π #t) ⇒ Type]
+  [⊢ #,#'(∀- (X- ...) (→- τ_in- ... τ_out-))⇒ Type]
   #;[⊢ #,#`(∀- (X- ...)
              #,(assign-type
                 #'(→- τ_in- ... τ_out-)
@@ -366,7 +364,7 @@
    ;;      (pretty-print (stx->datum (stx-map typeof #'(ty2 ...))))]
    [⊢ e_arg ≫ e_arg- ⇐ τ_in] ... ; typechecking args
    -----------------------------
-   [⊢ #,(syntax-property #'(app/eval e_fn- e_arg- ...) 'app #t) ⇒ #,(substs #'(e_arg- ...) #'(X ...) #'τ_out)]])
+   [⊢ #,#'(app/eval e_fn- e_arg- ...)⇒ #,(substs #'(e_arg- ...) #'(X ...) #'τ_out)]])
 
 (define-typed-syntax (ann e (~datum :) τ) ≫
   [⊢ e ≫ e- ⇐ τ]
@@ -518,16 +516,14 @@
      x+τss))
   
 
-  (define (find-recur-idx TY num-is x+τss)
+  (define (arg-recur-pairs TY x+τss)
     (stx-map
      (λ (x+τs)
        (define xs (stx-map stx-car x+τs))
-       (stx-filtermap
+       (stx-map
         (syntax-parser
-          [(x (t . _)) (if (and (free-id=? #'t TY))
-                                (cons #'x (stx-take xs num-is))
-                                (cons #f null))]
-          [_ #f])
+          [(x (t . _)) (if (free-id=? #'t TY) (cons #'x #t) (cons #'x #f))]
+          [(x τ) (if (free-id=? #'τ TY) (cons #'x #t) (cons #'x #f))])
         x+τs))
      x+τss)))
 
@@ -596,6 +592,7 @@
    #:with elim-TY (format-id #'TY "elim-~a" #'TY)
    #:with eval-TY (format-id #'TY "eval-~a" #'TY)
    #:with TY/internal (generate-temporary #'TY)
+   #:with ((rec-args ...) ...) (arg-recur-pairs #'TY #'(([x τin] ...) ...))
    ;#:do [(displayln (format "elim-TY: ~a \n eval-TY: ~a" #'elim-TY #'eval-TY))]
    --------
    [≻ (begin-
@@ -608,10 +605,11 @@
                              (syntax-property
                               (syntax-property #'(TY/internal) 'elim-name #'elim-TY)
                               'data-ref-name #'TY)
-                             'constructors   #'(C ...)) 'num-parameters  0) ⇒ τ]])
+                             'constructors #'(C ...))
+                            'num-parameters 0)⇒ τ]])
         ;; define structs for `C` constructors
         (struct C/internal (x ...) #:transparent) ...
-        (define C (unsafe-assign-type-with-ref-props C (x ...) (xrec ...) C/internal : τC)) ...
+        (define C (unsafe-assign-type-with-ref-props C (x ...) (rec-args ...) C/internal : τC)) ...
         ;; elimination form
         (define-typerule (elim-TY v P m ...) ≫
           [⊢ v ≫ v- ⇐ TY]
@@ -689,8 +687,8 @@
    #:with eval-TY (format-id #'TY "match-~a" #'TY)
    ;#:do [(displayln (format "elim-TY: ~a \n eval-TY: ~a" #'elim-TY #'eval-TY))]
    #:with (τm ...) (generate-temporaries #'(m ...))
-   #:with (((rec-arg rec-i ...) ...) ...) ;i isn't recursive ,this is a bad name
-          (find-recur-idx #'TY (stx-length #'(i ...)) #'(([i+x τin] ...) ...))
+   #:with ((rec-arg  ...) ...) (arg-recur-pairs #'TY #'(([A+i+x τA+i+x] ...) ...))
+       
    ;; these are all the generated definitions that implement the define-datatype
    #:with OUTPUT-DEFS
     #'(begin-
@@ -706,14 +704,15 @@
                 (syntax-property
                  (syntax-property
                   (syntax-property #'(TY- A- ... i- ...) 'elim-name #'elim-TY)
-                  'data-ref-name #'(TY A ... i ...)) 'constructors #'(C ...)) 'num-parameters (stx-length #'([A : τA] ...))) ⇒ τ])
+                  'data-ref-name #'(TY A ... i ...)) 'constructors #'(C ...))
+                'num-parameters (stx-length #'([A : τA] ...)))⇒ τ])
 
         ;; define structs for constructors
         ;; TODO: currently i's are included in struct fields; separate i's from i+x's
         (struct C/internal (xs) #:transparent) ...
         ;; TODO: this define should be a macro instead?
         ;; must use internal list, bc Racket is not auto-currying
-        (define C (unsafe-assign-type-with-ref-props C ([A+i+x : τA+i+x] ...) ((rec-arg rec-i ...) ...)
+        (define C (unsafe-assign-type-with-ref-props C (A+i+x ...) (rec-arg ...)
                    (λ/c- (A ... i+x ...) (C/internal (list i+x ...)))
                    : τC)) ...
         ;; define eliminator-form elim-TY
