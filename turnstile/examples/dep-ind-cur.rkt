@@ -522,8 +522,8 @@
        (define xs (stx-map stx-car x+τs))
        (stx-map
         (syntax-parser
-          [(x (t . _)) (if (free-id=? #'t TY) (cons #'x #t) (cons #'x #f))]
-          [(x τ) (if (free-id=? #'τ TY) (cons #'x #t) (cons #'x #f))])
+          [(x (t . _)) (cons #'x (free-id=? #'t TY))]
+          [(x τ) (cons #'x (free-id=? #'τ TY))])
         x+τs))
      x+τss)))
 
