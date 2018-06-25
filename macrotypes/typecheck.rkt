@@ -969,7 +969,8 @@
 
   (define (infer es #:ctx [ctx null] #:tvctx [tvctx null]
                     #:tag [tag (current-tag)] ; the "type" to return from es
-                    #:key [kev #'(current-type-eval)]) ; kind-eval (tvk in tvctx)
+                    #:key [kev #'(current-type-eval)]
+                    #:stop-ls [stop-ls null]) ; kind-eval (tvk in tvctx)
      (syntax-parse ctx
        [((~or X:id [x:id (~seq sep:id τ) ...]) ...) ; dont expand; τ may reference to tv
        #:with (~or (~and (tv:id ...)
@@ -1022,7 +1023,7 @@
        (define/syntax-parse
          (e+ ...)
          (for/list ([e (syntax->list #'(e ...))])
-                   (local-expand e 'expression null ctx)))
+                   (local-expand e 'expression stop-ls ctx)))
 
        (define (typeof e)
          (detach e tag))
@@ -1031,7 +1032,7 @@
              #'(e+ ...)
              (stx-map typeof #'(e+ ...)))]
 
-      [([x τ] ...) (infer es #:ctx #`([x #,tag τ] ...) #:tvctx tvctx #:tag tag)]))
+      [([x τ] ...) (infer es #:ctx #`([x #,tag τ] ...) #:tvctx tvctx #:tag tag #:stop-ls stop-ls)]))
 
   ;; fns derived from infer ---------------------------------------------------
   ;; some are syntactic shortcuts, some are for backwards compat
